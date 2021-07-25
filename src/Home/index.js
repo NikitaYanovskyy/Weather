@@ -6,6 +6,7 @@ import WeatherPhoto from '../shared/WeatherPhoto'
 import Photo from './Photo'
 import Loader from './Loader'
 import {getCurrentLocation,getCityWeather} from '../api/index'
+import axios from 'axios'
 
 const Home = () => {
     const [isLoaderVisible, setIsLoaderVisible] = useState(true)
@@ -13,12 +14,15 @@ const Home = () => {
     const [county , setCountry] = useState('')
     const [weatherData, setWeatherData] = useState({temperature: '', weather: '', description: ''})
     useEffect(() => {
+        let getCurrentLocation_CancelToken = axios.CancelToken.source()
+        let getCityWeather_CancelToken = axios.CancelToken.source()
+        
         navigator.geolocation.getCurrentPosition( async (position) => {
 
             //Get current Location
             const lat = position.coords.latitude
             const long = position.coords.longitude
-            let locationResponse = await getCurrentLocation(lat,long)
+            let locationResponse = await getCurrentLocation(lat,long, getCurrentLocation_CancelToken.token)
             locationResponse.city !== '' ? setCurrentPlace(locationResponse.city) : setCurrentPlace(locationResponse.locality)
             setCountry(locationResponse.countryName)
 
@@ -31,7 +35,7 @@ const Home = () => {
                 }
             })
 
-            let WeatherResponse = await getCityWeather(cityId)
+            let WeatherResponse = await getCityWeather(cityId, getCityWeather_CancelToken.token)
             if(WeatherResponse){
                 setWeatherData({
                     temperature: Math.round(WeatherResponse.main.temp),
@@ -40,6 +44,10 @@ const Home = () => {
                 })
             }
         })
+        return ()=>{
+            getCurrentLocation_CancelToken.cancel()
+            getCityWeather_CancelToken.cancel()
+        }
     },[])
         return(
             <div className="home_wrapper">

@@ -13,25 +13,32 @@ const Form = (props) => {
     const [isLoading, setIsLoading] = useState(false)
     const history = useHistory()
     const sourseRef = useRef();
-    
+    const throttle = useRef(false);
     const handleSelect = (city, country) =>{
         history.push(`/Weather/city?q=${city}&country=${country}`)
     }
     const handleChange = async (e) =>{
         setInputValue(e.target.value)
-        const fetchData = async ()=>{
+        if (throttle.current) {
+            return
+        }
+        const fetchData = ()=>{
             if(e.target.value.length >= 4){
+                setIsLoading(true)
+                throttle.current = true;
                 if(typeof sourseRef.current !== 'undefined'){
                     sourseRef.current.cancel()
                 }
                 sourseRef.current = axios.CancelToken.source();
-                setIsLoading(true)
-                let response = await getCitySuggestions(e.target.value, sourseRef.current.token)
-                if(response){
-                    setIsSuggestionsVisible(true)   
-                    setCities(response.data)
-                    setIsLoading(false)
-                }
+                setTimeout( async()=>{
+                    throttle.current = false
+                    let response = await getCitySuggestions(e.target.value, sourseRef.current.token)
+                    if(response){
+                        setIsSuggestionsVisible(true)   
+                        setCities(response.data)
+                        setIsLoading(false)
+                    }
+                },800) 
             }    
             if(e.target.value.length === 3){
                 if(typeof sourseRef.current !== 'undefined'){
