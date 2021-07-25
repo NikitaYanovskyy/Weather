@@ -13,7 +13,7 @@ const WeatherPhoto = (props) =>{
     const imageRef = useRef({current: {src: ''}})
     
     useEffect(()=>{
-            if(imageLoading){
+            if(imageLoading && props.weather){
                 imageRef.current = new Image()
                 switch (props.weather) {
                     case "Clouds":
